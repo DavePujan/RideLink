@@ -13,8 +13,16 @@ import { getOrCreateUser } from './src/db/users.ts';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let currentFilename: string;
+let currentDirname: string;
+
+try {
+  currentFilename = __filename;
+  currentDirname = __dirname;
+} catch {
+  currentFilename = fileURLToPath(import.meta.url);
+  currentDirname = path.dirname(currentFilename);
+}
 
 const app = express();
 app.use(express.json());

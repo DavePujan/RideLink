@@ -16,11 +16,10 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+app.use(express.json());
 
-  app.use(express.json());
+export default app;
 
   // --- API ROUTES ---
 
@@ -1018,6 +1017,9 @@ async function startServer() {
 
   // --- VITE MIDDLEWARE SETUP ---
 
+async function startServer() {
+  const PORT = 3000;
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1037,4 +1039,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}

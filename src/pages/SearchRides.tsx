@@ -246,7 +246,7 @@ export const SearchRides: React.FC<SearchRidesProps> = ({ onNavigate }) => {
                         Shared Transit
                       </div>
                       <span className="text-2xl font-extrabold text-blue-600 tracking-tight">
-                        ${parseFloat(ride.fare).toFixed(2)}
+                        ₹{parseFloat(ride.fare).toFixed(2)}
                       </span>
                     </div>
 

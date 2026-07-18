@@ -205,7 +205,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ onNavigate }) =>
                     </div>
                     <div>
                       <p className="font-semibold text-slate-400 uppercase text-[9px] tracking-wide">Fare Total</p>
-                      <p className="mt-0.5 text-blue-600 font-bold">${(parseFloat(booking.fare) * booking.seatsBooked).toFixed(2)}</p>
+                      <p className="mt-0.5 text-blue-600 font-bold">₹{(parseFloat(booking.fare) * booking.seatsBooked).toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -287,7 +287,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ onNavigate }) =>
                 Rate Your Journey Experience
               </h3>
               <p className="text-xs text-slate-500 font-sans mb-6">
-                Your feedback helps RideLink maintain a trusted commute environment. Reviewing: <strong>{selectedBookingForReview.driverName}</strong>.
+                Your feedback helps RideSathi maintain a trusted commute environment. Reviewing: <strong>{selectedBookingForReview.driverName}</strong>.
               </p>
 
               {reviewSuccess ? (

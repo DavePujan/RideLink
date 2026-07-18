@@ -160,7 +160,7 @@ export const MyRidesPage: React.FC<MyRidesPageProps> = ({ onNavigate }) => {
                     </div>
                     <div>
                       <p className="font-semibold text-slate-400 uppercase text-[9px] tracking-wide">Fare Rate</p>
-                      <p className="mt-0.5 text-blue-600 font-bold">${parseFloat(ride.fare).toFixed(2)}</p>
+                      <p className="mt-0.5 text-blue-600 font-bold">₹{parseFloat(ride.fare).toFixed(2)}</p>
                     </div>
                   </div>
                 </div>

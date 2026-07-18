@@ -36,7 +36,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onLogin, i
                 Connect. <span className="text-blue-600">Ride.</span> Save.
               </h1>
               <p className="mt-6 text-lg sm:text-xl text-slate-600 font-sans leading-relaxed">
-                RideLink is a smart peer-to-peer carpooling platform designed for university students, professionals, and daily commuters. Share your journey, split fuel costs, and make sustainable travel a daily habit.
+                RideSathi is a smart peer-to-peer carpooling platform designed for university students, professionals, and daily commuters. Share your journey, split fuel costs, and make sustainable travel a daily habit.
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -116,7 +116,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onLogin, i
                     <div className="border-l border-white/20 h-8 self-center" />
                     <div>
                       <p className="text-white/60 text-xs">Estimated Fare</p>
-                      <p className="font-medium text-emerald-200 mt-0.5">$4.50</p>
+                      <p className="font-medium text-emerald-200 mt-0.5">₹150</p>
                     </div>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onLogin, i
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">
-              Why Commuters Prefer RideLink
+              Why Commuters Prefer RideSathi
             </h2>
             <p className="mt-4 text-lg text-slate-600">
               We focus on building mutual trust, high transparency, and maximum ecological and economical efficiency.
@@ -161,7 +161,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onLogin, i
                 </div>
                 <h3 className="text-xl font-bold text-slate-950 font-display">Verified Profiles Only</h3>
                 <p className="mt-3 text-slate-600 font-sans text-sm leading-relaxed">
-                  We verify driving licenses, email addresses, and phone numbers. Combined with our peer-review system, RideLink builds a community you can trust.
+                  We verify driving licenses, email addresses, and phone numbers. Combined with our peer-review system, RideSathi builds a community you can trust.
                 </p>
               </div>
             </div>
@@ -233,10 +233,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onLogin, i
             <div className="p-2 bg-blue-600 rounded-lg">
               <Car className="w-5 h-5 text-white" />
             </div>
-            <span className="font-display font-bold text-lg tracking-wider">RideLink</span>
+            <span className="font-display font-bold text-lg tracking-wider">RideSathi</span>
           </div>
           <p className="text-sm text-slate-400">
-            &copy; 2026 RideLink Inc. All rights reserved. Built with pride using Google Cloud SQL and Firebase.
+            &copy; 2026 RideSathi Inc. All rights reserved. Built with pride using Google Cloud SQL and Firebase.
           </p>
         </div>
       </footer>

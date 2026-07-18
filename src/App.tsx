@@ -133,7 +133,7 @@ function MainApp() {
                   <Car className="w-5 h-5" />
                 </div>
                 <span className="font-display font-extrabold text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition">
-                  RideLink
+                  RideSathi
                 </span>
               </button>
             </div>

@@ -98,7 +98,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             SYSTEM ADMINISTRATOR
           </div>
           <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">
-            RideLink Administrator Portal
+            RideSathi Administrator Portal
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Platform health statistics, active user profiles, and carpool listing moderation panel.
@@ -169,7 +169,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     Commuter Security & Verification Audit
                   </h3>
                   <p className="text-xs text-slate-300 mt-2 font-sans leading-relaxed">
-                    RideLink operates as a trusted university and corporate network. Administrators have the responsibility to ensure all drivers present a valid driving license number before scheduled departure dates to maintain safe transit metrics.
+                    RideSathi operates as a trusted university and corporate network. Administrators have the responsibility to ensure all drivers present a valid driving license number before scheduled departure dates to maintain safe transit metrics.
                   </p>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           {ride.seatsAvailable} of {ride.seatsTotal} available
                         </td>
                         <td className="p-4 font-bold text-blue-600">
-                          ${parseFloat(ride.fare).toFixed(2)}
+                          ₹{parseFloat(ride.fare).toFixed(2)}
                         </td>
                         <td className="p-4 text-right">
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${

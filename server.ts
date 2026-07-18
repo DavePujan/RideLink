@@ -1043,7 +1043,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`RideLink server running on http://localhost:${PORT}`);
+    console.log(`RideSathi server running on http://localhost:${PORT}`);
   });
 }
 

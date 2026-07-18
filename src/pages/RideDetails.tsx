@@ -433,7 +433,7 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                   Shared Route
                 </span>
                 <span className="text-xl font-extrabold text-blue-600 tracking-tight">
-                  ${parseFloat(ride.fare).toFixed(2)} / Seat
+                  ₹{parseFloat(ride.fare).toFixed(2)} / Seat
                 </span>
               </div>
 
@@ -664,7 +664,7 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                       </p>
                       <div className="pt-1.5 flex flex-col gap-2">
                         <div className="text-[10px] text-slate-400 font-mono">
-                          Total Fare: <strong className="text-blue-600">${(parseFloat(ride.fare) * myBooking.seatsBooked).toFixed(2)}</strong>
+                          Total Fare: <strong className="text-blue-600">₹{(parseFloat(ride.fare) * myBooking.seatsBooked).toFixed(2)}</strong>
                         </div>
                         <button
                           onClick={() => handleCancelBooking(myBooking.id)}
@@ -691,7 +691,7 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                       </p>
                       <div className="bg-white/80 p-3 rounded-xl border border-emerald-100 text-[11px] text-slate-700 space-y-1.5 font-sans">
                         <div>Seats Booked: <strong>{myBooking.seatsBooked}</strong></div>
-                        <div>Amount Due: <strong className="text-blue-600">${(parseFloat(ride.fare) * myBooking.seatsBooked).toFixed(2)}</strong></div>
+                        <div>Amount Due: <strong className="text-blue-600">₹{(parseFloat(ride.fare) * myBooking.seatsBooked).toFixed(2)}</strong></div>
                         <div className="flex items-center gap-1 text-slate-500 font-mono text-[10px] pt-1 border-t border-slate-100 mt-2">
                           <Phone className="w-3 h-3 text-emerald-600" />
                           Driver Contact: <span className="text-slate-800 font-bold">{ride.driverPhone || 'No phone listed'}</span>
@@ -764,7 +764,7 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                       >
                         {[...Array(ride.seatsAvailable)].map((_, i) => (
                           <option key={i} value={i + 1}>
-                            {i + 1} Seat{i > 0 ? 's' : ''} (${(parseFloat(ride.fare) * (i + 1)).toFixed(2)})
+                            {i + 1} Seat{i > 0 ? 's' : ''} (₹{(parseFloat(ride.fare) * (i + 1)).toFixed(2)})
                           </option>
                         ))}
                       </select>
@@ -820,7 +820,7 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                                 <span className="inline-block text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-sans">
                                   {b.seatsBooked} Seat{b.seatsBooked > 1 ? 's' : ''}
                                 </span>
-                                <p className="text-[10px] text-slate-500 font-bold mt-1 font-mono">${(parseFloat(ride.fare) * b.seatsBooked).toFixed(2)}</p>
+                                <p className="text-[10px] text-slate-500 font-bold mt-1 font-mono">₹{(parseFloat(ride.fare) * b.seatsBooked).toFixed(2)}</p>
                               </div>
                             </div>
                             <div className="flex gap-2">

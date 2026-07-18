@@ -167,7 +167,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 ) : null}
               </div>
               <p className="text-slate-500 mt-1 font-sans">
-                Welcome to your RideLink cockpit. Ready to share a ride today?
+                Welcome to your RideSathi cockpit. Ready to share a ride today?
               </p>
             </div>
           </div>

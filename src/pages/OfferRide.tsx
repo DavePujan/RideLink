@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Car, MapPin, Calendar, DollarSign, Users, AlertCircle, Sparkles, CheckCircle, PlusCircle, ArrowRight } from 'lucide-react';
+import { Car, MapPin, Calendar, IndianRupee, Users, AlertCircle, Sparkles, CheckCircle, PlusCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface OfferRideProps {
@@ -411,16 +411,16 @@ export const OfferRide: React.FC<OfferRideProps> = ({ onNavigate }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                    Cost Per Passenger ($)
+                    Cost Per Passenger (₹)
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                    <IndianRupee className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                     <input
                       type="number"
                       required
-                      min="0.50"
-                      step="0.01"
-                      placeholder="e.g. 5.50"
+                      min="1"
+                      step="1"
+                      placeholder="e.g. 150"
                       value={fare}
                       onChange={(e) => setFare(e.target.value)}
                       className="pl-10 w-full border border-slate-200 rounded-xl p-2.5 text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"

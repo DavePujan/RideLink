@@ -1,5 +1,5 @@
 {
-  "name": "RideLink",
+  "name": "RideSathi",
   "description": "Smart Carpooling Web Application",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -16,6 +16,7 @@ export const SearchRides: React.FC<SearchRidesProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [recentSearches, setRecentSearches] = useState<any[]>([]);
+  const [frequentRoutes, setFrequentRoutes] = useState<any[]>([]);
 
   // Auto-fetch featured/all scheduled rides on load
   useEffect(() => {
@@ -29,6 +30,24 @@ export const SearchRides: React.FC<SearchRidesProps> = ({ onNavigate }) => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    const fetchFrequentRoutes = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch('/api/frequent-routes', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setFrequentRoutes(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching frequent routes:', err);
+      }
+    };
+    fetchFrequentRoutes();
+  }, [token]);
 
   const fetchActiveRides = async (
     e?: React.FormEvent,
@@ -216,6 +235,50 @@ export const SearchRides: React.FC<SearchRidesProps> = ({ onNavigate }) => {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Frequent Routes (Quick Toggle/Pre-fill) */}
+          {token && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                  Frequent Routes:
+                </span>
+                {frequentRoutes.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {frequentRoutes.map((route) => (
+                      <button
+                        key={route.id}
+                        type="button"
+                        onClick={() => {
+                          setPickup(route.pickupLocation);
+                          setDestination(route.destination);
+                          fetchActiveRides(undefined, route.pickupLocation, route.destination);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border border-blue-100 hover:border-blue-200 text-xs rounded-full font-bold transition cursor-pointer shadow-sm"
+                        title={`Pre-fill & Search: ${route.pickupLocation} to ${route.destination}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        <span>{route.name}</span>
+                        <span className="text-[10px] text-blue-400 font-medium">({route.pickupLocation} → {route.destination})</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    No frequent routes saved yet. Save them in your{' '}
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('profile')}
+                      className="text-blue-600 hover:underline font-bold cursor-pointer"
+                    >
+                      Profile
+                    </button>{' '}
+                    to pre-fill searches instantly!
+                  </span>
+                )}
               </div>
             </div>
           )}

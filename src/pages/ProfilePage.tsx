@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { User, Phone, ShieldCheck, Car, Trash2, CheckCircle, AlertCircle, PlusCircle, ArrowLeft, Star } from 'lucide-react';
+import { User, Phone, ShieldCheck, Car, Trash2, CheckCircle, AlertCircle, PlusCircle, ArrowLeft, Star, MapPin, Compass } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface ProfilePageProps {
@@ -33,6 +33,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
 
+  // Frequent Routes States
+  const [frequentRoutesList, setFrequentRoutesList] = useState<any[]>([]);
+  const [routesLoading, setRoutesLoading] = useState(true);
+  const [fRouteName, setFRouteName] = useState('');
+  const [fRoutePickup, setFRoutePickup] = useState('');
+  const [fRouteDestination, setFRouteDestination] = useState('');
+  const [routeSuccess, setRouteSuccess] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,6 +53,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     }
     fetchVehicles();
     fetchProfileStats();
+    fetchFrequentRoutes();
   }, [dbUser, token]);
 
   const fetchProfileStats = async () => {
@@ -77,6 +87,79 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       console.error('Error fetching vehicles:', err);
     } finally {
       setVehiclesLoading(false);
+    }
+  };
+
+  const fetchFrequentRoutes = async () => {
+    if (!token) return;
+    setRoutesLoading(true);
+    try {
+      const res = await fetch('/api/frequent-routes', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFrequentRoutesList(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching frequent routes:', err);
+    } finally {
+      setRoutesLoading(false);
+    }
+  };
+
+  const handleAddRoute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    setRouteError(null);
+    setRouteSuccess(false);
+
+    try {
+      const res = await fetch('/api/frequent-routes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: fRouteName,
+          pickupLocation: fRoutePickup,
+          destination: fRouteDestination,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRouteSuccess(true);
+        setFRouteName('');
+        setFRoutePickup('');
+        setFRouteDestination('');
+        await fetchFrequentRoutes();
+      } else {
+        setRouteError(data.error || 'Failed to add frequent route.');
+      }
+    } catch (err: any) {
+      setRouteError(err.message || 'An error occurred while creating route.');
+    }
+  };
+
+  const handleDeleteRoute = async (id: number) => {
+    if (!token) return;
+    const conf = window.confirm('Are you sure you want to remove this frequent route?');
+    if (!conf) return;
+
+    try {
+      const res = await fetch(`/api/frequent-routes/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchFrequentRoutes();
+      } else {
+        setRouteError(data.error || 'Failed to delete route.');
+      }
+    } catch (err: any) {
+      setRouteError(err.message || 'An error occurred while deleting route.');
     }
   };
 
@@ -289,6 +372,124 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                   </button>
                 </div>
               </form>
+            </div>
+
+            {/* Frequent Routes Section */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <h2 className="text-base font-display font-bold text-slate-950">
+                  Frequent Routes
+                </h2>
+              </div>
+
+              {routeSuccess && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-lg text-xs flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Frequent route saved successfully.
+                </div>
+              )}
+
+              {routeError && (
+                <div className="mb-4 p-3 bg-rose-50 border border-rose-100 text-rose-800 rounded-lg text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  {routeError}
+                </div>
+              )}
+
+              {/* Saved Routes List */}
+              <div className="mb-6">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 font-sans">
+                  My Saved Routes
+                </h3>
+                {routesLoading ? (
+                  <div className="text-center py-4 text-slate-400 text-xs">Loading routes...</div>
+                ) : frequentRoutesList.length > 0 ? (
+                  <div className="space-y-3">
+                    {frequentRoutesList.map((route) => (
+                      <div key={route.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between group hover:border-slate-300 transition">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            {route.name}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+                            <span className="truncate max-w-[120px] font-semibold text-emerald-600">{route.pickupLocation}</span>
+                            <span>→</span>
+                            <span className="truncate max-w-[120px] font-semibold text-blue-600">{route.destination}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteRoute(route.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition animate-none"
+                          title="Delete route"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 px-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs leading-relaxed font-sans">
+                    No frequent routes saved yet. Create one below to pre-fill your ride searches.
+                  </div>
+                )}
+              </div>
+
+              {/* Add Route Form */}
+              <div className="border-t border-slate-100 pt-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 font-sans">
+                  Save a New Route
+                </h3>
+                <form onSubmit={handleAddRoute} className="space-y-3">
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Route Name (e.g., Work Commute)"
+                      value={fRouteName}
+                      onChange={(e) => setFRouteName(e.target.value)}
+                      className="w-full border border-slate-200 rounded-xl p-2.5 text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Pickup Point"
+                        value={fRoutePickup}
+                        onChange={(e) => setFRoutePickup(e.target.value)}
+                        className="pl-10 w-full border border-slate-200 rounded-xl p-2.5 text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
+                      />
+                    </div>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-blue-500" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Destination"
+                        value={fRouteDestination}
+                        onChange={(e) => setFRouteDestination(e.target.value)}
+                        className="pl-10 w-full border border-slate-200 rounded-xl p-2.5 text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-1.5">
+                    <button
+                      type="submit"
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl transition text-xs cursor-pointer shadow-sm"
+                    >
+                      Save Frequent Route
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
 

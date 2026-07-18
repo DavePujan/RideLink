@@ -7,11 +7,32 @@ import * as dotenv from 'dotenv';
 
 // Import our database client and schema
 import { db } from './src/db/index.ts';
-import { users, vehicles, rides, bookings, reviews, notifications, messages } from './src/db/schema.ts';
+import { users, vehicles, rides, bookings, reviews, notifications, messages, frequentRoutes } from './src/db/schema.ts';
 import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
 import { getOrCreateUser } from './src/db/users.ts';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
+
+// Lazy initialization of Gemini API
+let aiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+    aiClient = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return aiClient;
+}
 
 let currentFilename: string;
 let currentDirname: string;
@@ -162,6 +183,64 @@ export default app;
     }
   });
 
+  // Frequent Routes: GET User's Frequent Routes
+  app.get('/api/frequent-routes', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.user.uid;
+      const routes = await db.select().from(frequentRoutes).where(eq(frequentRoutes.userId, uid)).orderBy(desc(frequentRoutes.createdAt));
+      res.status(200).json({ success: true, data: routes });
+    } catch (error: any) {
+      console.error('Error fetching frequent routes:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Frequent Routes: POST Add a Frequent Route
+  app.post('/api/frequent-routes', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.user.uid;
+      const { name, pickupLocation, destination } = req.body;
+
+      if (!name || !pickupLocation || !destination) {
+        return res.status(400).json({ success: false, error: 'Name, pickup, and destination are required.' });
+      }
+
+      const newRoute = await db.insert(frequentRoutes)
+        .values({
+          userId: uid,
+          name,
+          pickupLocation: pickupLocation.trim(),
+          destination: destination.trim(),
+        })
+        .returning();
+
+      res.status(201).json({ success: true, data: newRoute[0] });
+    } catch (error: any) {
+      console.error('Error creating frequent route:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Frequent Routes: DELETE a Frequent Route
+  app.delete('/api/frequent-routes/:id', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.user.uid;
+      const id = parseInt(req.params.id, 10);
+
+      // Verify ownership
+      const existing = await db.select().from(frequentRoutes).where(and(eq(frequentRoutes.id, id), eq(frequentRoutes.userId, uid)));
+      if (existing.length === 0) {
+        return res.status(404).json({ success: false, error: 'Frequent route not found or unauthorized.' });
+      }
+
+      await db.delete(frequentRoutes).where(eq(frequentRoutes.id, id));
+      res.status(200).json({ success: true, message: 'Frequent route deleted.' });
+    } catch (error: any) {
+      console.error('Error deleting frequent route:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Rides: GET list or Search
   app.get('/api/rides', async (req, res) => {
     try {
@@ -192,23 +271,16 @@ export default app;
       const conditions = [eq(rides.status, 'SCHEDULED')];
 
       if (pickup && typeof pickup === 'string' && pickup.trim() !== '') {
-        conditions.push(ilike(rides.pickupLocation, `%${pickup}%`));
+        conditions.push(ilike(rides.pickupLocation, `%${pickup.trim()}%`));
       }
 
       if (destination && typeof destination === 'string' && destination.trim() !== '') {
-        conditions.push(ilike(rides.destination, `%${destination}%`));
+        conditions.push(ilike(rides.destination, `%${destination.trim()}%`));
       }
 
       if (date && typeof date === 'string' && date.trim() !== '') {
-        // Filter rides starting on the given date (UTC / Local day bounds)
-        const dateStart = new Date(date);
-        dateStart.setHours(0, 0, 0, 0);
-        const dateEnd = new Date(date);
-        dateEnd.setHours(23, 59, 59, 999);
-        conditions.push(and(
-          sql`${rides.departureTime} >= ${dateStart}`,
-          sql`${rides.departureTime} <= ${dateEnd}`
-        ) as any);
+        // Use database date comparison to ensure robust timezone-independent matching
+        conditions.push(sql`TO_CHAR(${rides.departureTime}, 'YYYY-MM-DD') = ${date.trim()}`);
       }
 
       const finalRides = await queryBuilder.where(and(...conditions)).orderBy(rides.departureTime);
@@ -1020,6 +1092,150 @@ export default app;
     } catch (error: any) {
       console.error('Error fetching admin rides:', error);
       res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Gemini Context-Aware Chatbot API
+  app.post('/api/chatbot', async (req, res) => {
+    try {
+      const { messages: clientMessages } = req.body;
+      if (!clientMessages || !Array.isArray(clientMessages)) {
+        return res.status(400).json({ success: false, error: 'Invalid message history format.' });
+      }
+
+      // Check for user login in headers
+      const authHeader = req.headers.authorization;
+      let uid: string | null = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split('Bearer ')[1];
+        try {
+          const { adminAuth } = await import('./src/lib/firebase-admin.ts');
+          const decodedToken = await adminAuth.verifyIdToken(token);
+          uid = decodedToken.uid;
+        } catch (err) {
+          console.warn('Optional auth token validation in chatbot failed:', err);
+        }
+      }
+
+      let userVehicles: any[] = [];
+      let userOfferedRides: any[] = [];
+      let userBookings: any[] = [];
+      let userFrequentRoutes: any[] = [];
+      let userName = 'Guest';
+      let dbUserRecord: any = null;
+
+      if (uid) {
+        // Fetch user from DB
+        const userResults = await db.select().from(users).where(eq(users.uid, uid)).limit(1);
+        if (userResults.length > 0) {
+          dbUserRecord = userResults[0];
+          userName = dbUserRecord.name;
+        }
+
+        // Fetch user vehicles
+        userVehicles = await db.select().from(vehicles).where(eq(vehicles.ownerId, uid));
+
+        // Fetch user offered rides
+        userOfferedRides = await db.select().from(rides).where(eq(rides.driverId, uid));
+
+        // Fetch user bookings (with ride details)
+        userBookings = await db.select({
+          bookingId: bookings.id,
+          seatsBooked: bookings.seatsBooked,
+          status: bookings.status,
+          rideId: rides.id,
+          pickupLocation: rides.pickupLocation,
+          destination: rides.destination,
+          departureTime: rides.departureTime,
+          fare: rides.fare,
+          statusRide: rides.status,
+          driverId: rides.driverId,
+        })
+        .from(bookings)
+        .innerJoin(rides, eq(bookings.rideId, rides.id))
+        .where(eq(bookings.passengerId, uid));
+
+        // Fetch frequent routes
+        userFrequentRoutes = await db.select().from(frequentRoutes).where(eq(frequentRoutes.userId, uid));
+      }
+
+      // Compile user-specific dynamic database context for Gemini
+      let contextText = `The current user is a Guest (not signed in). Recommend them to Sign In with Google via the "Sign In" button in the navigation header to unlock booking rides, offering carpools, adding vehicles, and managing active schedules.`;
+      if (uid && dbUserRecord) {
+        contextText = `The current user is signed in.
+User Details:
+- Name: ${userName}
+- Email: ${dbUserRecord.email}
+- Phone: ${dbUserRecord.phone || 'Not provided'}
+- Driver License: ${dbUserRecord.licenseNumber || 'None (must register a license in Profile to offer rides)'}
+- Role/Is Admin: ${dbUserRecord.isAdmin ? 'Yes (Administrator)' : 'No (Regular User)'}
+
+Registered Vehicles:
+${userVehicles.length > 0 ? userVehicles.map((v, i) => `${i + 1}. ${v.color} ${v.make} ${v.model} (License Plate: ${v.registrationPlate}, Capacity: ${v.capacity} seats)`).join('\n') : 'None'}
+
+Offered Carpools (as Driver):
+${userOfferedRides.length > 0 ? userOfferedRides.map((r, i) => `${i + 1}. Ride #${r.id}: ${r.pickupLocation} to ${r.destination} | Departure: ${new Date(r.departureTime).toLocaleString('en-IN')} | Fare: ₹${r.fare} | Seats Left: ${r.seatsAvailable}/${r.seatsTotal} | Status: ${r.status}`).join('\n') : 'None'}
+
+Carpool Bookings (as Passenger):
+${userBookings.length > 0 ? userBookings.map((b, i) => `${i + 1}. Booking #${b.bookingId} for Ride #${b.rideId}: ${b.pickupLocation} to ${b.destination} | Departure: ${new Date(b.departureTime).toLocaleString('en-IN')} | Seats booked: ${b.seatsBooked} | Status: ${b.status} | Ride Status: ${b.statusRide}`).join('\n') : 'None'}
+
+Saved Frequent Routes:
+${userFrequentRoutes.length > 0 ? userFrequentRoutes.map((fr, i) => `${i + 1}. ${fr.name}: ${fr.pickupLocation} to ${fr.destination}`).join('\n') : 'None'}`;
+      }
+
+      // Format current date and time for contextual awareness
+      const currentDateTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+      // Build system instruction
+      const systemInstruction = `You are "RideSathi Mitra", the warm, intelligent, and highly knowledgeable context-aware AI Support Assistant for the RideSathi carpooling and ride-sharing platform.
+Your goal is to assist users with using the platform, troubleshooting, planning multi-step rides, and understanding their current ride schedules.
+
+Current Indian Standard Time (IST): ${currentDateTime}
+
+Dynamic Real-Time Database Context of the Current User:
+${contextText}
+
+About RideSathi Platform:
+1. "Find Ride" Page: Users can search for carpools by specifying pickup location, destination, departure date, and number of seats required. There is a helpful "Frequent Routes" fast-click pre-fill bar at the top!
+2. "Offer Ride" Page: Users can offer carpools. They must first add a registered vehicle in their Profile and add their driver's license. They specify pickup, destination, departure date & time, per-seat fare in Indian Rupees (₹), and total available seats.
+3. "User Cockpit" (Dashboard): Gives an elegant layout showing pending & upcoming rides, passenger requests, reviews, and a user's recent carpooling statistics.
+4. "My Profile" Page: Users can manage their contact phone number, upload/view their profile picture, register multiple personal vehicles, update their driver's license, and save "Frequent Routes" to pre-fill future ride searches instantly.
+5. "My Bookings" & "My Rides": Pages to keep track of passengers' reservation history and drivers' offered carpools. Each active ride details page features a visual Leaflet route map showing green (pickup) and blue (destination) markers, as well as a live group chat for coordinates sync.
+
+Guidelines for your replies:
+- Be polite, helpful, and concise. Keep responses layout-friendly using Markdown (bullet points, bold texts). Keep them short so they look great in a small floating drawer.
+- Use the dynamic real-time database context above to answer personalized questions! For example, if they ask "What are my bookings?" or "What's my schedule?", summarize their actual bookings and offered rides from the context.
+- If they ask about editing vehicles, license, or frequent routes, guide them to the "My Profile" page.
+- Do NOT make up fake rides or bookings. If they have none, guide them on how to find one on the "Find Ride" page or how to register a vehicle to offer one.
+- Keep a friendly, positive, "mitra" (friend) tone. Treat prices in Indian Rupees (₹).`;
+
+      // Format history messages to match @google/genai contents parameter
+      // `@google/genai` expects an array of `{ role: string, parts: [{ text: string }] }`
+      const contents = clientMessages.map((msg: any) => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      // Lazy load Gemini client
+      const aiInstance = getGeminiClient();
+
+      // Call generateContent
+      const response = await aiInstance.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+        }
+      });
+
+      const responseText = response.text || "I apologize, but I could not formulate a response at the moment. Please try again.";
+
+      res.status(200).json({ success: true, reply: responseText });
+
+    } catch (error: any) {
+      console.error('Error in chatbot endpoint:', error);
+      res.status(500).json({ success: false, error: error.message || 'An error occurred while generating response.' });
     }
   });
 

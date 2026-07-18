@@ -1,6 +1,6 @@
-# 🚗 RideLink
+# 🚗 RideSathi
 
-**RideLink** is a modern, fully featured, and highly polished full-stack carpooling and ride-sharing platform. It allows users to offer rides, claim seating, chat in ride-specific groups, view real-time notifications, rate other passengers/drivers, and manage their carpool schedule seamlessly.
+**RideSathi** is a modern, fully featured, and highly polished full-stack carpooling and ride-sharing platform. It allows users to offer rides, claim seating, chat in ride-specific groups, view real-time notifications, rate other passengers/drivers, and manage their carpool schedule seamlessly.
 
 This application is built as a robust, production-ready full-stack application using **React (with Vite)**, **Express**, **Drizzle ORM**, **PostgreSQL**, and **Firebase Authentication**.
 
@@ -17,7 +17,7 @@ Ensure all your project files are pushed to a public or private GitHub repositor
 
 ### Step 2: Import Project to Vercel
 1. Go to your [Vercel Dashboard](https://vercel.com/dashboard) and click **Add New** -> **Project**.
-2. Connect your GitHub account and import your `RideLink` repository.
+2. Connect your GitHub account and import your `RideSathi` repository.
 
 ### Step 3: Configure Build Settings
 Vercel will auto-detect **Vite** as the framework. Keep the default settings:
@@ -83,7 +83,7 @@ APP_URL="http://localhost:3000"
 SQL_HOST="localhost"
 SQL_USER="postgres"
 SQL_PASSWORD="password"
-SQL_DB_NAME="ridelink"
+SQL_DB_NAME="ridesathi"
 ```
 
 *Note: Your client-side Firebase credentials will fall back to default development keys automatically, but you can override them in `.env` or in your environment settings using `VITE_FIREBASE_*` variables.*
@@ -98,14 +98,15 @@ The server will boot and run on [http://localhost:3000](http://localhost:3000) w
 To test the compiled production bundles:
 ```bash
 npm run build
-npm start
 ```
 
 ---
 
 ## ✨ Features Highlight
 
-- **Interactive Search & Filter**: Find rides based on departure, destination, date, or price.
+- **Saved Frequent Routes (New)**: Save your common pickup and destination routes on the Account Management page, and toggle them on the Search Rides page to instantly pre-fill and trigger searches in one click.
+- **Interactive Routing Map (New)**: Displays pickup and drop-off coordinates visually using an interactive Leaflet map component inside the Ride Details page, featuring customized colored location markers and route lines.
+- **Interactive Search & Filter**: Find rides based on departure, destination, date, or price (fully localized to Indian Rupees - ₹).
 - **Seamless Seating Claims**: Request seat reservations, and monitor pending approvals or active bookings.
 - **Driver Management Panels**: Create carpools, set custom per-seat fares, and accept or decline incoming passenger requests.
 - **Real-Time Passenger Log**: Tracks confirmed, pending, and rejected carpoolers.

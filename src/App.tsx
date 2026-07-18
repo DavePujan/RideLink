@@ -27,6 +27,7 @@ import { MyRidesPage } from './pages/MyRidesPage.tsx';
 import { MyBookingsPage } from './pages/MyBookingsPage.tsx';
 import { NotificationsPage } from './pages/NotificationsPage.tsx';
 import { AdminDashboard } from './pages/AdminDashboard.tsx';
+import { SupportChatbot } from './components/SupportChatbot.tsx';
 
 function MainApp() {
   const { user, dbUser, token, loading, loginWithGoogle, logout } = useAuth();
@@ -342,6 +343,9 @@ function MainApp() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Dynamic Context-Aware AI Chatbot Agent */}
+      <SupportChatbot />
 
     </div>
   );

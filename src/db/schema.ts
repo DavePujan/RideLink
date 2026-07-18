@@ -104,6 +104,18 @@ export const messages = pgTable('messages', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// 8. Frequent Routes Table
+export const frequentRoutes = pgTable('frequent_routes', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.uid, { onDelete: 'cascade' })
+    .notNull(),
+  name: text('name').notNull(), // e.g. "Daily commute", "Gym", "Home to Uni"
+  pickupLocation: text('pickup_location').notNull(),
+  destination: text('destination').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relationships
 export const usersRelations = relations(users, ({ many }) => ({
   vehicles: many(vehicles),
@@ -111,6 +123,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
   receivedNotifications: many(notifications),
   messages: many(messages),
+  frequentRoutes: many(frequentRoutes),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
@@ -175,6 +188,13 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
   sender: one(users, {
     fields: [messages.senderId],
+    references: [users.uid],
+  }),
+}));
+
+export const frequentRoutesRelations = relations(frequentRoutes, ({ one }) => ({
+  user: one(users, {
+    fields: [frequentRoutes.userId],
     references: [users.uid],
   }),
 }));

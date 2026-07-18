@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { RideMap } from '../components/RideMap.tsx';
 
 interface RideDetailsProps {
   rideId: number;
@@ -454,6 +455,8 @@ export const RideDetails: React.FC<RideDetailsProps> = ({ rideId, onNavigate }) 
                   </div>
                 </div>
               </div>
+
+              <RideMap pickupLocation={ride.pickupLocation} destination={ride.destination} />
 
               <div className="mt-6 pt-6 border-t border-slate-100 flex items-center gap-6 text-slate-500 text-xs font-mono">
                 <span className="flex items-center gap-1.5">
